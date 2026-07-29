@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../api';
 
 export default function Register() {
   const [form, setForm] = useState({ email: '', password: '', full_name: '' });
@@ -13,18 +14,11 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://192.168.1.106:3001/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
-
-      localStorage.setItem('token', data.token);
+      const res = await api.post('/auth/register', form);
+      localStorage.setItem('token', res.data.token);
       window.location.href = '/';
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || 'Registration failed');
     } finally {
       setLoading(false);
     }

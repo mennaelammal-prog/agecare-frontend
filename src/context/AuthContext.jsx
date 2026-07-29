@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import api from '../api';
 
 const AuthContext = createContext(null);
 
@@ -6,7 +7,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On app start: check if token exists and is still valid
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -18,15 +18,8 @@ export function AuthProvider({ children }) {
 
   async function fetchUserProfile(token) {
     try {
-      const res = await fetch('http://192.168.1.106:3001/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        localStorage.removeItem('token');
-      }
+      const res = await api.get('/auth/me');
+      setUser(res.data.user);
     } catch (err) {
       console.error('Auth check failed:', err);
       localStorage.removeItem('token');
@@ -60,7 +53,6 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Hook to use auth anywhere
 export function useAuth() {
   return useContext(AuthContext);
 }

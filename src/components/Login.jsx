@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,22 +17,11 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://192.168.1.106:3001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      login(data.token, data.user);
+      const res = await api.post('/auth/login', { email, password });
+      login(res.data.token, res.data.user);
       navigate('/');
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);
     }
