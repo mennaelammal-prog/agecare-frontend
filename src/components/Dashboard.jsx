@@ -1,125 +1,63 @@
 ﻿import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import CheckInForm from './CheckInForm';
-import Chat from './Chat';
-import FamilyContacts from './FamilyContacts';
-import History from './History';
-import Medications from './Medications';
-import Appointments from './Appointments';
-import VitalSigns from './VitalSigns';
-import FamilyLink from './FamilyLink';
+import api from '../api';
 
 export default function Dashboard() {
-  const { logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('checkin');
+  const { user, logout } = useAuth();
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatReply, setChatReply] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
-  const tabs = [
-    { id: 'checkin', label: 'Daily Check-in', icon: '✅' },
-    { id: 'chat', label: 'AI Chat', icon: '💬' },
-    { id: 'medications', label: 'Medications', icon: '💊' },
-    { id: 'appointments', label: 'Appointments', icon: '📅' },
-    { id: 'vitals', label: 'Vital Signs', icon: '🩺' },
-    { id: 'family', label: 'Family', icon: '👨‍👩‍👧' },
-    { id: 'familylink', label: 'Link Patient', icon: '🔗' },
-    { id: 'history', label: 'History', icon: '📊' },
-  ];
+  async function sendChat(e) {
+    e.preventDefault();
+    if (!chatMessage.trim()) return;
+    setChatLoading(true);
+    setChatReply('');
+    try {
+      const res = await api.post('/chat', { message: chatMessage });
+      console.log('Chat response:', res.data);
+      setChatReply(res.data.reply || res.data.message || 'No reply');
+    } catch (err) {
+      console.error('Chat error:', err);
+      setChatReply('Error: ' + (err.response?.data?.error || 'Failed to get response'));
+    } finally {
+      setChatLoading(false);
+    }
+  }
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.logo}>🏥 Age Care App</h1>
-        <button onClick={logout} style={styles.logoutBtn}>Logout</button>
-      </header>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <h1>Age Care Dashboard</h1>
+        <button onClick={logout} style={{ padding: '10px 20px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+          Logout
+        </button>
+      </div>
 
-      <nav style={styles.nav}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              ...styles.tab,
-              ...(activeTab === tab.id ? styles.tabActive : {}),
-            }}
-          >
-            <span style={styles.tabIcon}>{tab.icon}</span>
-            {tab.label}
+      <div style={{ background: '#f0f4f8', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
+        <h3>Welcome, {user?.full_name || user?.name || 'User'}!</h3>
+        <p>Email: {user?.email}</p>
+      </div>
+
+      <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+        <h3>AI Health Assistant</h3>
+        <form onSubmit={sendChat} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <input
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.target.value)}
+            placeholder="Ask a health question..."
+            style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
+          />
+          <button type="submit" disabled={chatLoading} style={{ padding: '12px 24px', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+            {chatLoading ? '...' : 'Send'}
           </button>
-        ))}
-      </nav>
-
-      <main style={styles.main}>
-        {activeTab === 'checkin' && <CheckInForm />}
-        {activeTab === 'chat' && <Chat />}
-        {activeTab === 'medications' && <Medications />}
-        {activeTab === 'appointments' && <Appointments />}
-        {activeTab === 'vitals' && <VitalSigns />}
-        {activeTab === 'family' && <FamilyContacts />}
-        {activeTab === 'familylink' && <FamilyLink />}
-        {activeTab === 'history' && <History />}
-      </main>
+        </form>
+        {chatReply && (
+          <div style={{ marginTop: '15px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '4px solid #667eea' }}>
+            <strong>AI:</strong> {chatReply}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    background: '#f5f7fa',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 24px',
-    background: 'white',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  },
-  logo: {
-    margin: 0,
-    fontSize: '22px',
-    color: '#333',
-  },
-  logoutBtn: {
-    padding: '8px 16px',
-    background: '#e74c3c',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  nav: {
-    display: 'flex',
-    gap: '6px',
-    padding: '12px 16px',
-    background: 'white',
-    borderBottom: '1px solid #eee',
-    overflowX: 'auto',
-    flexWrap: 'wrap',
-  },
-  tab: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '8px 14px',
-    border: 'none',
-    borderRadius: '8px',
-    background: '#f0f0f0',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '500',
-    whiteSpace: 'nowrap',
-  },
-  tabActive: {
-    background: '#667eea',
-    color: 'white',
-  },
-  tabIcon: {
-    fontSize: '16px',
-  },
-  main: {
-    padding: '20px',
-    maxWidth: '900px',
-    margin: '0 auto',
-  },
-};
