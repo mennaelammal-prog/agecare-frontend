@@ -27,7 +27,7 @@ export default function Chat() {
         history: history.map(h => ({ role: h.role, content: h.content })),
       });
 
-      const aiResponse = response.data.data.response;
+      const aiResponse = response.data.reply;
       setHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
 
     } catch (err) {
